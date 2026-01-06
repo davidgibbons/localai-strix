@@ -24,6 +24,20 @@ docker run --rm -p 8080:8080 \
   ghcr.io/davidgibbons/localai-strix:latest
 ```
 
+Docker Compose example:
+
+```yaml
+services:
+  localai:
+    image: ghcr.io/davidgibbons/localai-strix:3.9.0
+    container_name: localai
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models
+      - ./backends:/backends
+```
+
 ## Healthcheck
 
 The container expects `HEALTHCHECK_ENDPOINT` to be set for the Docker healthcheck.

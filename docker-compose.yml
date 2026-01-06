@@ -2,19 +2,17 @@ version: '3.8'
 
 services:
   localai:
-    build: .
-    image: localai-strix-halo:latest
+    image: ghcr.io/davidgibbons/localai-strix:3.9.0
     container_name: localai
     ports:
       - "8080:8080"
     environment:
-      - MODELS_PATH=/build/models
       - DEBUG=true
       # You might need to specify the backend or other flags depending on the usage
     volumes:
-      - ./models:/build/models
-      - ./images:/build/images
-      - ./config:/build/config
+      - ./models:/models
+      - ./backends:/backends
+      - ./config:/configuration
     devices:
       - /dev/kfd:/dev/kfd
       - /dev/dri:/dev/dri
