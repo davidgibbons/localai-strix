@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  localai:
+    build: .
+    image: localai-strix-halo:latest
+    container_name: localai
+    ports:
+      - "8080:8080"
+    environment:
+      - MODELS_PATH=/build/models
+      - DEBUG=true
+      # You might need to specify the backend or other flags depending on the usage
+    volumes:
+      - ./models:/build/models
+      - ./images:/build/images
+      - ./config:/build/config
+    devices:
+      - /dev/kfd:/dev/kfd
+      - /dev/dri:/dev/dri
+    restart: unless-stopped
+    # Depending on the base image user, we might need to set 'user: root' or add the user to 'render' group
+    # but the base image likely handles this for the 'toolbox' user or defaults to root.
