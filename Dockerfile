@@ -4,7 +4,9 @@ FROM docker.io/kyuz0/amd-strix-halo-toolboxes:rocm-7.1.1-rocwmma
 ARG LOCALAI_VERSION=3.9.0
 
 # Install necessary dependencies
-RUN dnf install -y curl tar gzip
+RUN dnf install -y curl tar gzip libomp
+
+ENV LOCALAI_FORCE_META_BACKEND_CAPABILITY=amd
 
 # Install LocalAI
 RUN curl -L -o /tmp/local-ai https://github.com/mudler/LocalAI/releases/download/v${LOCALAI_VERSION}/local-ai-v${LOCALAI_VERSION}-linux-amd64 && \
