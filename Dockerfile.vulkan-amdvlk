@@ -1,4 +1,4 @@
-FROM docker.io/kyuz0/amd-strix-halo-toolboxes:rocm-7.1.1-rocwmma
+FROM docker.io/kyuz0/amd-strix-halo-toolboxes:vulkan-amdvlk
 
 # Keep in sync with upstream LocalAI release tag.
 ARG LOCALAI_VERSION=3.9.0
