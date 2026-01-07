@@ -45,7 +45,6 @@ jobs:
           push: true
           tags: ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-${{ matrix.base_tag }}
           build-args: |
-            LOCALAI_VERSION=${{ steps.localai.outputs.version }}
             BASE_IMAGE_TAG=${{ matrix.base_tag }}
             BUILD_TYPE=${{ matrix.build_type }}
           labels: |
