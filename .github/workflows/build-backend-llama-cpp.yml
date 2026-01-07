@@ -41,7 +41,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.rocm.llama-cpp
+          file: Dockerfile.llama-cpp
           push: true
           tags: ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-${{ matrix.base_tag }}
           build-args: |
