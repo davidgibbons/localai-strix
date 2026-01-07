@@ -1,0 +1,53 @@
+name: Build and Push Strix Llama.cpp Backend
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - Dockerfile.rocm.llama-cpp
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - base_tag: rocm-7.1.1-rocwmma
+            build_type: hipblas
+          - base_tag: vulkan-amdvlk
+            build_type: vulkan
+          - base_tag: vulkan-radv
+            build_type: vulkan
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: Dockerfile.rocm.llama-cpp
+          push: true
+          tags: ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-${{ matrix.base_tag }}
+          build-args: |
+            LOCALAI_VERSION=${{ steps.localai.outputs.version }}
+            BASE_IMAGE_TAG=${{ matrix.base_tag }}
+            BUILD_TYPE=${{ matrix.build_type }}
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.version=${{ steps.localai.outputs.version }}

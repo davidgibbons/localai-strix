@@ -1,0 +1,78 @@
+ARG BASE_IMAGE_TAG=rocm-7.1.1-rocwmma
+ARG BASE_IMAGE=docker.io/kyuz0/amd-strix-halo-toolboxes:${BASE_IMAGE_TAG}
+FROM ${BASE_IMAGE} AS grpc
+
+RUN dnf install -y \
+  cmake git make gcc gcc-c++ binutils \
+  glibc-devel kernel-headers \
+  && ln -sf /usr/bin/ld.bfd /usr/bin/ld
+  
+WORKDIR /build
+
+# This is a bit of a hack, but it's required in order to be able to effectively cache this layer in CI
+ARG GRPC_MAKEFLAGS="-j4 -Otarget"
+ARG GRPC_VERSION=v1.65.0
+ENV MAKEFLAGS=${GRPC_MAKEFLAGS}
+
+# We install GRPC to a different prefix here so that we can copy in only the build artifacts later
+# saves several hundred MB on the final docker image size vs copying in the entire GRPC source tree
+# and running make install in the target container
+RUN git clone --recurse-submodules --jobs 4 -b ${GRPC_VERSION} --depth 1 --shallow-submodules https://github.com/grpc/grpc && \
+    mkdir -p /build/grpc/cmake/build && \
+    cd /build/grpc/cmake/build && \
+    sed -i "216i\  TESTONLY" "../../third_party/abseil-cpp/absl/container/CMakeLists.txt" && \
+    cmake -DgRPC_INSTALL=ON -DgRPC_BUILD_TESTS=OFF -DCMAKE_INSTALL_PREFIX:PATH=/opt/grpc \
+      -DCMAKE_CXX_STANDARD=17 -DCMAKE_CXX_FLAGS="-include cstdint" ../.. && \
+    make && \
+    make install && \
+    rm -rf /build && \
+    dnf clean all
+
+FROM ${BASE_IMAGE} AS builder
+
+COPY --from=grpc /opt/grpc /usr/local
+
+SHELL ["/bin/bash", "-euxo", "pipefail", "-c"]
+ARG BASE_IMAGE_TAG=rocm-7.1.1-rocwmma
+ARG LOCALAI_VERSION=3.9.0
+ARG AMDGPU_TARGETS=gfx1151
+ARG LOCALAI_REPO=https://github.com/mudler/LocalAI.git
+ARG CMAKE_ARGS
+ENV CMAKE_ARGS=${CMAKE_ARGS}
+
+RUN dnf install -y \
+  curl tar gzip git binutils \
+  cmake ninja-build make gcc gcc-c++ \
+  protobuf-compiler protobuf-devel \
+  libomp \
+  && ln -sf /usr/bin/ld.bfd /usr/bin/ld \
+  && dnf clean all
+
+
+RUN <<'EOT' bash
+set -euxo pipefail
+git clone --depth 1 --branch "v${LOCALAI_VERSION}" "${LOCALAI_REPO}" /LocalAI
+
+cd /LocalAI/backend/cpp/llama-cpp
+make llama-cpp-avx
+make llama-cpp-avx2
+make llama-cpp-avx512
+make llama-cpp-fallback
+make llama-cpp-grpc
+make llama-cpp-rpc-server
+EOT
+
+
+# Copy libraries using a script to handle architecture differences
+# LocalAI's package script expects Debian-style libc path.
+RUN if [ ! -e /lib/x86_64-linux-gnu ]; then \
+    ln -s /lib64 /lib/x86_64-linux-gnu; \
+  fi && \
+  make -BC /LocalAI/backend/cpp/llama-cpp package
+
+
+FROM scratch
+
+
+# Copy all available binaries (the build process only creates the appropriate ones for the target architecture)
+COPY --from=builder /LocalAI/backend/cpp/llama-cpp/package/. ./

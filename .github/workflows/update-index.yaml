@@ -1,0 +1,38 @@
+name: Update Backend Index
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update-index:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream index
+        run: |
+          curl -L https://raw.githubusercontent.com/mudler/LocalAI/master/backend/index.yaml -o index.yaml
+
+      - name: Append Strix gallery entries
+        run: |
+          cat strix_gallery.yaml >> index.yaml
+
+      - name: Commit changes
+        run: |
+          if git diff --quiet -- index.yaml; then
+            echo "index.yaml is up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.yaml
+          git commit -m "Update backend index"
+          git push

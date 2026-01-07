@@ -1,0 +1,10 @@
+## strix-halo
+- !!merge <<: *llamacpp
+  name: "rocm-llama-cpp"
+  uri: "ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-rocm-7.1.1-rocwmma"
+- !!merge <<: *llamacpp
+  name: "vulkan-llama-cpp"
+  uri: "ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-vulkan-radv"
+- !!merge <<: *llamacpp
+  name: "vulkan-amdvlk-llama-cpp"
+  uri: "ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-vulkan-amdvlk"

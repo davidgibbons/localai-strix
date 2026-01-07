@@ -1,43 +1,34 @@
 # LocalAI Strix Container
 
-Custom container build for LocalAI with ROCm base image.
+Custom container build for LocalAI backends with ROCm base image.
 
-## Version
+Based on the toolbox image: docker.io/kyuz0/amd-strix-halo-toolboxes:rocm-7.1.1-rocwmma
 
-The LocalAI version is pinned in `Dockerfile` as `ARG LOCALAI_VERSION` and is updated automatically by GitHub Actions when new upstream releases are published.
+## Backend Gallery
 
-## Build and Publish
+This repo publishes a backend index that mirrors upstream LocalAI backends and appends Strix Halo-specific entries.
 
-GitHub Actions builds and publishes images to:
+Use this URL as your backend index:
 
-- `ghcr.io/davidgibbons/localai-strix:latest`
-- `ghcr.io/davidgibbons/localai-strix:<LOCALAI_VERSION>`
+```
+https://raw.githubusercontent.com/davidgibbons/localai-strix/main/index.yaml
+```
 
-## Run
-
-Example:
+Run example:
 
 ```sh
 docker run --rm -p 8080:8080 \
+  -e BACKENDS_URL=https://raw.githubusercontent.com/davidgibbons/localai-strix/main/index.yaml \
   -v $(pwd)/models:/models \
   -v $(pwd)/backends:/backends \
   ghcr.io/davidgibbons/localai-strix:latest
 ```
 
-Docker Compose example:
+Custom entries live in `strix_gallery.yaml`. The workflow `.github/workflows/update-index.yaml` keeps `index.yaml` in sync with upstream and appends the Strix entries.
 
-```yaml
-services:
-  localai:
-    image: ghcr.io/davidgibbons/localai-strix:3.9.0
-    container_name: localai
-    ports:
-      - "8080:8080"
-    volumes:
-      - ./models:/models
-      - ./backends:/backends
-```
+## Build and Publish
 
-## Healthcheck
+GitHub Actions builds and publishes images to:
 
-The container expects `HEALTHCHECK_ENDPOINT` to be set for the Docker healthcheck.
+- `ghcr.io/davidgibbons/localai-backends:latest-strix-llamacpp-*`
+
