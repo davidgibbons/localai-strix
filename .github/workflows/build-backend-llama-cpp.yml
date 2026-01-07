@@ -4,7 +4,7 @@ on:
   push:
     branches: ["main"]
     paths:
-      - Dockerfile.rocm.llama-cpp
+      - Dockerfile.llama-cpp
   workflow_dispatch:
 
 permissions:
